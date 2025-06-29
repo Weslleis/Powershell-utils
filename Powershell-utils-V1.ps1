@@ -1,16 +1,4 @@
-# Utilitários PowerShell para Manipulação de Histórico e Localização de Comandos
-
-Este script PowerShell fornece um conjunto de funções utilitárias para melhorar a experiência de linha de comando. Inclui funcionalidades como encontrar o caminho de um comando, limpar comandos iniciados com `&` do histórico, e remover comandos duplicados.
-
----
-
-## 📌 Funções
-
-### `Get-CommandPath`
-
-Localiza o caminho completo de um comando, similar ao comando `which` em sistemas Unix.
-
-```powershell
+# Função utilitária: mostra o caminho de um comando (como 'which' do Unix)
 function Get-CommandPath {
     <#
     .SYNOPSIS
@@ -34,15 +22,7 @@ function Get-CommandPath {
         Write-Host "Comando '$Command' não encontrado." -ForegroundColor Yellow
     }
 }
-```
 
----
-
-### `Clear-HistoryAmpersand`
-
-Remove comandos que iniciam com `&` do histórico do PowerShell (`PSReadLine`).
-
-```powershell
 function Clear-HistoryAmpersand {
     $historyFile = (Get-PSReadLineOption).HistorySavePath
     if (-not (Test-Path $historyFile)) { return }
@@ -51,27 +31,12 @@ function Clear-HistoryAmpersand {
     Set-Content -Path $historyFile -Value $filteredLines -Encoding UTF8
     Write-Host "🧹 Linhas iniciadas com '&' removidas do arquivo de histórico." -ForegroundColor Green
 }
-```
 
-Alias curto para chamar essa função:
-
-```powershell
 Set-Alias nh Clear-HistoryAmpersand
-```
 
-Opcionalmente, você pode registrar para limpar automaticamente ao sair da sessão:
-
-```powershell
+# Opcional: Limpar automaticamente ao sair da sessão
 Register-EngineEvent PowerShell.Exiting -Action { Clear-HistoryAmpersand } | Out-Null
-```
 
----
-
-### `Compress-PSHistory`
-
-Remove entradas duplicadas do histórico de comandos (`PSReadLine`), mantendo a primeira ocorrência.
-
-```powershell
 function Compress-PSHistory {
     <#
     .SYNOPSIS
@@ -110,20 +75,6 @@ function Compress-PSHistory {
     $removed = $lines.Count - $unique.Count
     Write-Host "✅ Histórico comprimido: $removed comandos duplicados removidos." -ForegroundColor Green
 }
-```
 
-Alias para chamada rápida:
-
-```powershell
+# Alias para comando curto
 Set-Alias Compress Compress-PSHistory
-```
-
----
-
-## ✅ Observações
-
-- Certifique-se de que o módulo `PSReadLine` esteja instalado e ativo.
-- O histórico manipulado por essas funções é o salvo no arquivo retornado por `Get-PSReadLineOption`.
-- Recomendado usar esses utilitários no seu perfil (`$PROFILE`) para tê-los sempre carregados na sessão.
-
----
