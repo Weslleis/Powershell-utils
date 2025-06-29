@@ -1,14 +1,16 @@
-# Utilitários PowerShell para Manipulação de Histórico e Localização de Comandos
+# Utilitários PowerShell para Histórico e Localização de Comandos
 
-Este script PowerShell fornece um conjunto de funções utilitárias para melhorar a experiência de linha de comando. Inclui funcionalidades como encontrar o caminho de um comando, limpar comandos iniciados com `&` do histórico, e remover comandos duplicados.
+Este documento reúne um conjunto de funções utilitárias em PowerShell para:
+
+- Localizar o caminho de comandos no sistema (como `which` no Unix).
+- Limpar o histórico do PowerShell (`PSReadLine`) de entradas não desejadas.
+- Remover duplicatas do histórico de comandos.
 
 ---
 
-## 📌 Funções
+## 🔎 `Get-CommandPath` — Localiza o Caminho de um Comando
 
-### `Get-CommandPath`
-
-Localiza o caminho completo de um comando, similar ao comando `which` em sistemas Unix.
+Similar ao `which` do Unix, essa função retorna o caminho completo de um comando no sistema.
 
 ```powershell
 function Get-CommandPath {
@@ -36,11 +38,34 @@ function Get-CommandPath {
 }
 ```
 
+### ▶️ Exemplo de uso
+
+```powershell
+Get-CommandPath notepad
+```
+
 ---
 
-### `Clear-HistoryAmpersand`
+## 🧹 `nh` — Limpa Linhas com `&` do Histórico
 
-Remove comandos que iniciam com `&` do histórico do PowerShell (`PSReadLine`).
+Alias para `Clear-HistoryAmpersand`, essa função remove do histórico comandos iniciados com o operador `&`.
+
+### ✅ Comportamento
+
+- Remove comandos como:
+  ```powershell
+  & python script.py
+  & "C:/meuscript.ps1"
+  ```
+- Mantém comandos que contenham `&` no meio, mas **não no início**.
+
+### ▶️ Uso
+
+```powershell
+nh
+```
+
+### 💾 Implementação
 
 ```powershell
 function Clear-HistoryAmpersand {
@@ -51,25 +76,50 @@ function Clear-HistoryAmpersand {
     Set-Content -Path $historyFile -Value $filteredLines -Encoding UTF8
     Write-Host "🧹 Linhas iniciadas com '&' removidas do arquivo de histórico." -ForegroundColor Green
 }
-```
 
-Alias curto para chamar essa função:
-
-```powershell
 Set-Alias nh Clear-HistoryAmpersand
-```
-
-Opcionalmente, você pode registrar para limpar automaticamente ao sair da sessão:
-
-```powershell
-Register-EngineEvent PowerShell.Exiting -Action { Clear-HistoryAmpersand } | Out-Null
 ```
 
 ---
 
-### `Compress-PSHistory`
+## 🔧 `Compress` — Remove Duplicatas do Histórico
 
-Remove entradas duplicadas do histórico de comandos (`PSReadLine`), mantendo a primeira ocorrência.
+Alias para `Compress-PSHistory`, essa função limpa comandos duplicados do histórico do PSReadLine.
+
+### ✅ Comportamento
+
+- Remove comandos idênticos, mantendo apenas a **primeira ocorrência**.
+- Comandos similares com parâmetros diferentes são mantidos.
+
+#### Exemplo:
+
+**Antes:**
+
+```
+winget update
+winget update
+winget update vlc
+winget update git
+get-process
+get-process
+```
+
+**Depois:**
+
+```
+winget update
+winget update vlc
+winget update git
+get-process
+```
+
+### ▶️ Uso
+
+```powershell
+Compress
+```
+
+### 💾 Implementação
 
 ```powershell
 function Compress-PSHistory {
@@ -110,20 +160,47 @@ function Compress-PSHistory {
     $removed = $lines.Count - $unique.Count
     Write-Host "✅ Histórico comprimido: $removed comandos duplicados removidos." -ForegroundColor Green
 }
-```
 
-Alias para chamada rápida:
-
-```powershell
 Set-Alias Compress Compress-PSHistory
 ```
 
 ---
 
-## ✅ Observações
+## ⚙️ Instalação no Perfil
 
-- Certifique-se de que o módulo `PSReadLine` esteja instalado e ativo.
-- O histórico manipulado por essas funções é o salvo no arquivo retornado por `Get-PSReadLineOption`.
-- Recomendado usar esses utilitários no seu perfil (`$PROFILE`) para tê-los sempre carregados na sessão.
+Para tornar os comandos permanentes:
+
+1. Abra seu perfil:
+
+```powershell
+notepad $PROFILE
+```
+
+2. Cole todas as funções e aliases neste arquivo e salve.
 
 ---
+
+## 💡 Automação ao Encerrar a Sessão
+
+Você pode automatizar a limpeza do histórico adicionando:
+
+```powershell
+Register-EngineEvent PowerShell.Exiting -Action {
+    Clear-HistoryAmpersand
+    Compress-PSHistory
+} | Out-Null
+```
+
+---
+
+## 📁 Backup do Histórico (Opcional)
+
+Antes de modificar o histórico:
+
+```powershell
+Copy-Item (Get-PSReadLineOption).HistorySavePath "$env:USERPROFILE\ConsoleHost_history_backup.txt"
+```
+
+---
+
+✅ Com isso, seu ambiente PowerShell ficará mais limpo, eficiente e com um histórico relevante e reutilizável.
